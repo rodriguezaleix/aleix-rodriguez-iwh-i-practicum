@@ -1,0 +1,23 @@
+doctype html
+html
+    head
+        title= title
+        link(rel="stylesheet", href="/css/style.css")
+    body
+        h1 Lista de Negocios
+        a(href="/update-cobj") Add to this table
+        br
+        br
+        table(border="1" cellpadding="5")
+            thead
+                tr
+                    th Nombre del Negocio
+                    th My Custom Prop 1
+                    th My Custom Prop 2
+            tbody
+                each deal in data
+                    tr
+                        // Usamos las variables que pasamos desde index.js para acceder a las propiedades
+                        td #{deal.properties[props.name]}
+                        td #{deal.properties[props.p1]}
+                        td #{deal.properties[props.p2]}
