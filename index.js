@@ -1,3 +1,4 @@
+require('dotenv').config(); // Carga las variables del archivo .env
 const express = require('express');
 const axios = require('axios');
 const app = express();
@@ -7,65 +8,82 @@ app.use(express.static(__dirname + '/public'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// * Please DO NOT INCLUDE the private app access token in your repo. Don't do this practicum in your normal account.
-const PRIVATE_APP_ACCESS = '';
+// ***************************************************************
+// TUS PROPIEDADES (Nombres internos)
+// ***************************************************************
+const PROP_NAME = 'dealname'; // En Negocios, el nombre es 'dealname'
+const PROP_1 = 'my_custom_prop_1'; 
+const PROP_2 = 'custom_prop_2'; 
+// ***************************************************************
 
-// TODO: ROUTE 1 - Create a new app.get route for the homepage to call your custom object data. Pass this data along to the front-end and create a new pug template in the views folder.
+const PRIVATE_APP_TOKEN = process.env.PRIVATE_APP_TOKEN;
 
-// * Code for Route 1 goes here
-
-// TODO: ROUTE 2 - Create a new app.get route for the form to create or update new custom object data. Send this data along in the next route.
-
-// * Code for Route 2 goes here
-
-// TODO: ROUTE 3 - Create a new app.post route for the custom objects form to create or update your custom object data. Once executed, redirect the user to the homepage.
-
-// * Code for Route 3 goes here
-
-/** 
-* * This is sample code to give you a reference for how you should structure your calls. 
-
-* * App.get sample
-app.get('/contacts', async (req, res) => {
-    const contacts = 'https://api.hubspot.com/crm/v3/objects/contacts';
+// RUTA 1: Página de Inicio (GET /)
+// Muestra la tabla con los negocios
+app.get('/', async (req, res) => {
+    const dealsEndpoint = 'https://api.hubapi.com/crm/v3/objects/deals';
+    
     const headers = {
-        Authorization: `Bearer ${PRIVATE_APP_ACCESS}`,
+        Authorization: `Bearer ${PRIVATE_APP_TOKEN}`,
         'Content-Type': 'application/json'
-    }
+    };
+    
+    // Pedimos a HubSpot el nombre y tus dos propiedades
+    const params = {
+        properties: `${PROP_NAME},${PROP_1},${PROP_2}`,
+        limit: 100
+    };
+
     try {
-        const resp = await axios.get(contacts, { headers });
-        const data = resp.data.results;
-        res.render('contacts', { title: 'Contacts | HubSpot APIs', data });      
+        const resp = await axios.get(dealsEndpoint, { headers, params });
+        // Pasamos los datos a la plantilla 'homepage'
+        res.render('homepage', { 
+            title: 'Lista de Negocios | Practicum', 
+            data: resp.data.results,
+            props: { name: PROP_NAME, p1: PROP_1, p2: PROP_2 } // Pasamos los nombres para usarlos en la vista
+        });
     } catch (error) {
         console.error(error);
+        res.render('error', { title: 'Error de conexión' });
     }
 });
 
-* * App.post sample
-app.post('/update', async (req, res) => {
-    const update = {
-        properties: {
-            "favorite_book": req.body.newVal
-        }
-    }
+// RUTA 2: Mostrar Formulario (GET /update-cobj)
+app.get('/update-cobj', (req, res) => {
+    res.render('updates', { 
+        title: 'Update Custom Object Form | Integrating With HubSpot I Practicum',
+        props: { p1: PROP_1, p2: PROP_2 }
+    });
+});
 
-    const email = req.query.email;
-    const updateContact = `https://api.hubapi.com/crm/v3/objects/contacts/${email}?idProperty=email`;
+// RUTA 3: Crear Negocio (POST /update-cobj)
+app.post('/update-cobj', async (req, res) => {
+    const createDealEndpoint = 'https://api.hubapi.com/crm/v3/objects/deals';
+    
     const headers = {
-        Authorization: `Bearer ${PRIVATE_APP_ACCESS}`,
+        Authorization: `Bearer ${PRIVATE_APP_TOKEN}`,
         'Content-Type': 'application/json'
     };
 
-    try { 
-        await axios.patch(updateContact, update, { headers } );
-        res.redirect('back');
-    } catch(err) {
-        console.error(err);
+    // Construimos el paquete de datos para enviar a HubSpot
+    const data = {
+        properties: {
+            [PROP_NAME]: req.body.name_field, // El nombre que escribiste en el form
+            [PROP_1]: req.body.prop1_field,   // Propiedad 1
+            [PROP_2]: req.body.prop2_field    // Propiedad 2
+        }
+    };
+
+    try {
+        await axios.post(createDealEndpoint, data, { headers });
+        // Si todo sale bien, volvemos a la página principal
+        res.redirect('/');
+    } catch (error) {
+        console.error(error);
+        // Si falla, volvemos al inicio también (para que no se cuelgue)
+        res.redirect('/');
     }
-
 });
-*/
 
-
-// * Localhost
+// Arrancar el servidor
 app.listen(3000, () => console.log('Listening on http://localhost:3000'));
