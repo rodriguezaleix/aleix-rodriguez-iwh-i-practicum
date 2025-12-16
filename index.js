@@ -1,4 +1,4 @@
-require('dotenv').config(); // Carga las variables del archivo .env
+require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
 const app = express();
@@ -9,81 +9,67 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 // ***************************************************************
-// TUS PROPIEDADES (Nombres internos)
+// CONFIGURACIÓN FINAL
 // ***************************************************************
-const PROP_NAME = 'dealname'; // En Negocios, el nombre es 'dealname'
-const PROP_1 = 'my_custom_prop_1'; 
-const PROP_2 = 'custom_prop_2'; 
+const PRIVATE_APP_TOKEN = process.env.PRIVATE_APP_ACCESS_TOKEN;
+
+// TU ID DE OBJETO REAL (Sacado de tu enlace)
+const OBJECT_ID = '2-54575926';
+
+// Nombres internos de las propiedades
+const PROP_NAME = 'name';
+const PROP_PUB = 'publisher';
+const PROP_PRICE = 'price';
 // ***************************************************************
 
-const PRIVATE_APP_TOKEN = process.env.PRIVATE_APP_TOKEN;
-
-// RUTA 1: Página de Inicio (GET /)
-// Muestra la tabla con los negocios
+// RUTA 1: HOME (Tabla de videojuegos)
 app.get('/', async (req, res) => {
-    const dealsEndpoint = 'https://api.hubapi.com/crm/v3/objects/deals';
-    
+    const endpoint = `https://api.hubapi.com/crm/v3/objects/${OBJECT_ID}?properties=${PROP_NAME},${PROP_PUB},${PROP_PRICE}`;
     const headers = {
         Authorization: `Bearer ${PRIVATE_APP_TOKEN}`,
         'Content-Type': 'application/json'
     };
-    
-    // Pedimos a HubSpot el nombre y tus dos propiedades
-    const params = {
-        properties: `${PROP_NAME},${PROP_1},${PROP_2}`,
-        limit: 100
-    };
-
     try {
-        const resp = await axios.get(dealsEndpoint, { headers, params });
-        // Pasamos los datos a la plantilla 'homepage'
+        const resp = await axios.get(endpoint, { headers });
         res.render('homepage', { 
-            title: 'Lista de Negocios | Practicum', 
+            title: 'Practicum Videojuegos | Final', 
             data: resp.data.results,
-            props: { name: PROP_NAME, p1: PROP_1, p2: PROP_2 } // Pasamos los nombres para usarlos en la vista
+            props: { name: PROP_NAME, pub: PROP_PUB, price: PROP_PRICE } 
         });
     } catch (error) {
-        console.error(error);
-        res.render('error', { title: 'Error de conexión' });
+        console.error('Error al conectar con HubSpot:', error.response ? error.response.data : error.message);
+        res.render('error', { title: 'Error de conexión | Revisa consola' });
     }
 });
 
-// RUTA 2: Mostrar Formulario (GET /update-cobj)
+// RUTA 2: FORMULARIO (Mostrar)
 app.get('/update-cobj', (req, res) => {
     res.render('updates', { 
-        title: 'Update Custom Object Form | Integrating With HubSpot I Practicum',
-        props: { p1: PROP_1, p2: PROP_2 }
+        title: 'Update Custom Object Form | Integrating With HubSpot I Practicum' 
     });
 });
 
-// RUTA 3: Crear Negocio (POST /update-cobj)
+// RUTA 3: FORMULARIO (Crear registro)
 app.post('/update-cobj', async (req, res) => {
-    const createDealEndpoint = 'https://api.hubapi.com/crm/v3/objects/deals';
-    
+    const endpoint = `https://api.hubapi.com/crm/v3/objects/${OBJECT_ID}`;
     const headers = {
         Authorization: `Bearer ${PRIVATE_APP_TOKEN}`,
         'Content-Type': 'application/json'
     };
-
-    // Construimos el paquete de datos para enviar a HubSpot
     const data = {
         properties: {
-            [PROP_NAME]: req.body.name_field, // El nombre que escribiste en el form
-            [PROP_1]: req.body.prop1_field,   // Propiedad 1
-            [PROP_2]: req.body.prop2_field    // Propiedad 2
+            [PROP_NAME]: req.body.name,
+            [PROP_PUB]: req.body.publisher,
+            [PROP_PRICE]: req.body.price
         }
     };
-
     try {
-        await axios.post(createDealEndpoint, data, { headers });
-        // Si todo sale bien, volvemos a la página principal
+        await axios.post(endpoint, data, { headers });
         res.redirect('/');
     } catch (error) {
-        console.error(error);
-        // Si falla, volvemos al inicio también (para que no se cuelgue)
+        console.error('Error al crear videojuego:', error.response ? error.response.data : error.message);
         res.redirect('/');
     }
 });
 
-// Arrancar el servidor
 app.listen(3000, () => console.log('Listening on http://localhost:3000'));
