@@ -1,27 +1,22 @@
 doctype html
 html
-    head
-        title= title
-        link(rel="stylesheet", href="/css/style.css")
-    body
-        .form-wrapper
-            h1 Crear Nuevo Negocio
-            p Introduce los datos para crear un registro en HubSpot.
-            
-            form(method="POST" action="/update-cobj")
-                // Campo para el Nombre
-                label(for="name_field") Nombre del Negocio:
-                input(type="text" name="name_field" required)
-                
-                // Campo para tu Propiedad 1
-                label(for="prop1_field") My Custom Prop 1:
-                input(type="text" name="prop1_field")
-                
-                // Campo para tu Propiedad 2
-                label(for="prop2_field") My Custom Prop 2:
-                input(type="text" name="prop2_field")
-                
-                button(type="submit") Crear Negocio
-            
-            br
-            a(href="/") Return to the homepage
+  head
+    title= title
+    meta(name="viewport" content="width=device-width, initial-scale=1")
+    link(rel="stylesheet", href="/css/style.css")
+  body
+    h1 Crear Nuevo Videojuego
+    a(href="/") Volver a la lista
+
+    .form-wrapper
+      form(method="POST")
+        label(for="name") Name:
+        input(type="text" name="name" required)
+        
+        label(for="publisher") Publisher:
+        input(type="text" name="publisher" required)
+        
+        label(for="price") Price:
+        input(type="number" name="price" required)
+        
+        input(type="submit" value="Crear Videojuego")
